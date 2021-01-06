@@ -1,0 +1,91 @@
+#https://github.com/keithrozario/Klayers/blob/master/deployments/python3.8/arns/eu-west-1.csv
+
+import urllib
+from bs4 import BeautifulSoup #not default
+import pandas #not default
+from datetime import datetime
+import re
+import time
+import boto3
+import pymysql
+from sqlalchemy import create_engine
+
+def lambda_handler(event, context):
+    
+    address = []
+    price = []
+    bathroom = []
+    bedroom = []
+    structure = []
+    weblink = []
+    date = datetime.now().strftime('%Y-%m-%d')
+
+    url = 'https://www.daft.ie/dublin-city/houses-for-sale/north-dublin-city/'
+    page = urllib.request.urlopen(url)
+    html_soup = BeautifulSoup(page, "html.parser")
+    number_containers = html_soup.find_all('strong')
+    number_page = int(re.findall(r'\d+',number_containers[1].text)[0])
+    pages_url = [str(i) for i in range(0,number_page,20)]
+
+    for page in pages_url:
+        # Make a get request
+        url = urllib.request.urlopen('https://www.daft.ie/dublin-city/houses-for-sale/north-dublin-city/?offset=' + page)
+        # Pause the loop
+        time.sleep(5)
+        # Parse the content of the request with BeautifulSoup
+        html_soup = BeautifulSoup(url, "html.parser")
+        # Select all the containers from a single page
+        house_containers = html_soup.find_all('div', class_ = 'PropertyCardContainer__container')
+        # For every house container
+        for container in house_containers:
+            if container.find('div', class_ = 'PropertyInformationCommonStyles__propertyTypes') is None:
+                house_address = container.find('a', class_ = 'PropertyInformationCommonStyles__addressCopy--link').contents[0]
+                house_price = container.find('strong', class_ = 'PropertyInformationCommonStyles__costAmountCopy').contents[0]
+                house_bedroom = container.find('div', class_ = 'QuickPropertyDetails__iconCopy').contents[0]
+                house_bathroom = container.find('div', class_ = 'QuickPropertyDetails__iconCopy--WithBorder').contents[0]
+                house_structure = container.find('div', class_ = 'QuickPropertyDetails__propertyType').contents[0]
+                if container.find('a', class_ = 'brandLink') is not None:
+                    house_weblink = container.find('a', class_ = 'brandLink')['href']
+                else:
+                    house_weblink = "none"
+                address.append(house_address)
+                price.append(house_price)
+                bathroom.append(house_bathroom)
+                bedroom.append(house_bedroom)
+                structure.append(house_structure)
+                weblink.append(house_weblink)
+
+    house_df = pandas.DataFrame({
+        'address': address,
+        'price': price,
+        'bathroom': bathroom,
+        'bedroom': bedroom,
+        'structure': structure,
+        'date': date,
+        'weblink': weblink
+    })
+    # print(house_df.info())
+    # house_df
+
+    # write_data = house_df.to_csv(index=False)
+    # cur_dt = datetime.now().strftime('%Y%m%d')
+    
+    # # S3 Connect
+    # ACCESS_KEY_ID = 'XXXXX'
+    # ACCESS_SECRET_KEY = 'XXXXXX'
+    # BUCKET_NAME = 'daft-db'
+    # FILE_NAME = "north_dublin_" + cur_dt + ".csv"
+    # s3 = boto3.resource(
+    #     's3',
+    #     aws_access_key_id=ACCESS_KEY_ID,
+    #     aws_secret_access_key=ACCESS_SECRET_KEY,
+    #     config=boto3.session.Config(signature_version='s3v4')
+    # )
+    # # Uploaded File
+    # s3.Bucket(BUCKET_NAME).put_object(Key=FILE_NAME, Body=write_data)
+    
+    # RDS Connect
+    engine = create_engine("mysql+pymysql://admin:XXXXX@daft-mysql.XXXXXXX.eu-west-1.rds.amazonaws.com:3306/daftdb")    
+    # Uploaded File
+    house_df.to_sql(name = "daftdb", con = engine, if_exists = "append")
+    engine.dispose()
