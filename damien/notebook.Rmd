@@ -1,0 +1,15 @@
+---
+title: "Damien notebook"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# libraries --------------------------------------------------------------------
+library(tidyverse)
+library(here)
+
+# data -------------------------------------------------------------------------
+daftdb <- readr::read_rds(here("data/daftdb.rds"))
+```
