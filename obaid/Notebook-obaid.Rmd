@@ -1,0 +1,59 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+lets import all the libraries first
+
+
+```{r}
+# Install pacman ("package manager") if needed
+if (!require("pacman")) install.packages("pacman")
+
+# Load contributed packages with pacman
+pacman::p_load(pacman, party, rio, tidyverse,stringr,lubridate)
+# Load contributed packages with pacman
+
+```
+
+import the Data. This is the data in its raw form which requires some procession before it can be analysed
+
+```{r}
+daftdb <- rio::import("daftdb.rds") %>% as_tibble()
+
+```
+
+
+Process and clean data.
+
+1. Clean price data
+2. Remove euro sign and convert price in numeric format
+3. Add a new factor region 
+
+```{r}
+df<-daftdb %>%
+  mutate(price=iconv(enc2utf8(daftdb$price),sub="byte")) %>%
+  mutate(address=iconv(enc2utf8(daftdb$address),sub="byte")) %>%
+  mutate(sale_type= case_when(str_detect(price,"^Reserve") == TRUE ~ "Auction", TRUE ~ "Sale")) %>%
+  mutate(price=str_remove_all(price,"\u20AC")) %>%
+  mutate(price=str_remove_all(price,",")) %>%
+  mutate(price=str_remove(price,"^Reserve:")) %>%
+  mutate(price=str_remove(price,"^AMV:")) %>%
+  mutate(price=str_replace(price,"Price On Application","0")) %>%
+  mutate(price=str_remove(price,"Reserve not to exceed:")) %>%
+  mutate(price=as.numeric(price)) %>%
+  mutate(region=str_extract(address, "Dublin [0-9]+")) %>%
+  mutate(region= as.factor(region), structure= as.factor(structure)) %>%
+  mutate(date= as.Date(date, format = "%m/%d/%y")) %>%
+  print()
+```
+
+
+```{r}
+
+df %>%
+  group_by(month=floor_date(date, "month")) %>%
+  summarise(amount=mean(price)) %>%
+  plot()
+```
+
