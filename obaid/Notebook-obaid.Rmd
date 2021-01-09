@@ -50,6 +50,14 @@ df<-daftdb %>%
 
 
 ```{r}
+df %>%
+  group_by(month(date)) %>%
+  select(price) %>%
+  summarise_each(funs(mean))
+```
+
+
+```{r}
 
 df %>%
   group_by(month=floor_date(date, "month")) %>%
