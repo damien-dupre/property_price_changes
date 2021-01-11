@@ -27,11 +27,11 @@ testdf$price <- str_trim(testdf$price) #removed whitespaces
 testdf
 
 #euro sign removed-------------------------------------------------------------------
-testdf$price2 <- str_sub(testdf$price,2)
+testdf$price <- str_sub(testdf$price,2)
 testdf
 
 #replaced empty spaces with 0--------------------------------------------------------
-testdf$price2 <- str_replace_all(testdf$price2, "^$","0") 
+testdf$price <- str_replace_all(testdf$price, "^$","0") 
 
 #testdf$price2 <- gsub("^$", "0", testdf$price2) - This would work too
 
@@ -41,7 +41,7 @@ testdf
 #testdf$price2 <- str_replace(testdf$price2, ",","")
 
 #conversion time-------------------------------------------------------------------
-testdf$price2=as.double(testdf$price2)
+testdf$price=as.double(testdf$price)
 class(testdf$price2) #successful
 
 summary(testdf$price2)
@@ -54,5 +54,29 @@ summary(testdf$price2)
 unique(testdf$address)
 
 testdf$dublin_code <- str_extract(testdf$address, "Dublin (.)")
+
+# Find mean in groups: method 1 --------------------------------------------------------
+# aggregate(x = iris$Sepal.Length,      Specify data column
+#           by = list(iris$Species),    Specify group indicator
+#           FUN = mean)                 Specify function (i.e. mean)
+# 
+# Group.1     x
+# setosa 5.006
+# versicolor 5.936
+# virginica 6.588
+
+# Find mean in groups: method 2 --------------------------------------------------------
+# iris %>%                              Specify data frame
+#   group_by(Species) %>%               Specify group indicator
+#   summarise_at(vars(Sepal.Length),    Specify column
+#                list(name = mean))     Specify function
+
+# A tibble: 3 x 2
+# Species    Sepal.Length
+# <fct>             <dbl>
+# setosa             5.01
+# versicolor         5.94
+# virginica          6.59
+
 
 
