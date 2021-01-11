@@ -26,7 +26,6 @@ df<-daftdb %>%
   print()
 
 
-
 df %>%
   group_by(month(date)) %>%
   select(price) %>%
@@ -43,6 +42,8 @@ df %>%
   summarise(amount=mean(price),structure) %>%
   plot()
 
+df%>%
+  
 
 
 df %>%
@@ -51,6 +52,7 @@ df %>%
   summarise( avg_price= mean(price, na.rm = TRUE)) %>%
   ggplot(aes(month, avg_price)) +
   geom_line()
+
 
 #bymonth <- aggregate(cbind(Melbourne,Southern,Flagstaff)~month(Date),
 #data=data,FUN=sum)
