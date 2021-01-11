@@ -21,8 +21,9 @@ df<-daftdb %>%
   mutate(price=as.numeric(price)) %>%
   mutate_at(vars(price),~ if_else(is.na(.),0,.)) %>%
   mutate(region=str_extract(address, "Dublin [0-9]+")) %>%
+  mutate_at(vars(region),~ if_else(is.na(.),"Co. Dublin",.)) %>%
   mutate(region= as.factor(region), structure= as.factor(structure)) %>%
-  mutate(date= as.Date(date, format = "%m/%d/%y")) %>%
+  mutate(date= as.Date(date, format = "%d/%m/%y")) %>%
   print()
 
 
@@ -33,25 +34,53 @@ df %>%
   plot()
 
 df %>%
-  group_by(month=floor_date(date, "week")) %>%
+  group_by(month=floor_date(date, "month")) %>%
+  summarise(amount=mean(price),region) %>%
+  print()
+
+#Bar Pplot
+df %>%
+  group_by(week=floor_date(date, "week")) %>%
   summarise(amount=mean(price)) %>%
-  plot()
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+    geom_bar(stat = "identity") +
+    theme_classic()
+ 
+#line Chart  
 
 df %>%
-  group_by(month=floor_date(date, "week")) %>%
-  summarise(amount=mean(price),structure) %>%
-  plot()
+  group_by(week=floor_date(date)) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin"
+    )
+  )
 
-df%>%
+df %>%
+  group_by(region) %>%
+  summarise(amount=mean(price)) %>%
+  arrange(desc(amount)) %>%
+  ggplot(aes(x=region,y=amount/100000)) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Regions",
+    title = paste(
+      "Mean House Prices regionwise during First Lockdown in Dublin"
+    )
+  ) 
+
   
 
 
-df %>%
-  mutate(month= month(date)) %>%
-  group_by(day) %>%
-  summarise( avg_price= mean(price, na.rm = TRUE)) %>%
-  ggplot(aes(month, avg_price)) +
-  geom_line()
+
 
 
 #bymonth <- aggregate(cbind(Melbourne,Southern,Flagstaff)~month(Date),

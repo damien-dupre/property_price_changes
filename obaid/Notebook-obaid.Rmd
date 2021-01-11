@@ -79,4 +79,184 @@ df %>%
     )
   )
 ```
+ 
+ Dublin 1
+ 
+```{r}
+df %>%
+  filter(region=="Dublin 1") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 1"
+    )
+  )
+```
+ Dublin 11
+```{r}
+df %>%
+  filter(region=="Dublin 11") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 11"
+    )
+  )
+```
+Dublin 13
+
+ 
+```{r}
+df %>%
+  filter(region=="Dublin 13") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 13"
+    )
+  )
+```
+
+Dublin 15
+
+```{r}
+df %>%
+  filter(region=="Dublin 15") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 15"
+    )
+  )
+```
+
+Dublin 17
+
+```{r}
+df %>%
+  filter(region=="Dublin 17") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 17"
+    )
+  )
+```
+Dublin 3
+```{r}
+df %>%
+  filter(region=="Dublin 3") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 3"
+    )
+  )
+```
+Dublin 5
+```{r}
+df %>%
+  filter(region=="Dublin 5") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 5"
+    )
+  )
+```
+Dublin 7
+
+```{r}
+df %>%
+  filter(region=="Dublin 7") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 7"
+    )
+  )
+```
+Dublin 9
+
+```{r}
+df %>%
+  filter(region=="Dublin 9") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Dublin 9"
+    )
+  )
+```
+This Chart depicts price data in County Dublin excluding above regions in Dublin
+```{r}
+df %>%
+  filter(region=="Co. Dublin") %>%
+  group_by(week=floor_date(date, "week")) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=week,y=amount/100000, fill=week)) +
+  geom_line(stat = "identity") +
+  theme_classic()+
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste(
+      "Trend in House Prices (mean) during First Lockdown in Co. Dublin"
+    )
+  )
+```
 
