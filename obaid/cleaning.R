@@ -48,11 +48,21 @@ df %>%
  
 #line Chart  
 
+
+date_diff<-date("2020/03/20")-date("1970-01-01")
+date_diff<-as.numeric(str_remove(date_diff,"[:alpha:]|[:]|[,]|[\u20AC]|[\u0020]"))
+date_diff
+duration(20,units = "days")
+
+base_year<-date("1970-01-01")
+(base_year %--% date("2020/03/20")) %/% days(1)
+
+
 df %>%
-  group_by(week=floor_date(date)) %>%
+  group_by(week=floor_date(date, "week")) %>%
   summarise(amount=mean(price)) %>%
   ggplot(aes(x=week,y=amount/100000, fill=week)) +
-  geom_line(stat = "identity") +
+  geom_line(stat = "identity", col="#00AFBB",size=2) +
   theme_classic()+
   labs(
     y = "Mean Price (in Hundred Thousands Euros)",
@@ -60,7 +70,19 @@ df %>%
     title = paste(
       "Trend in House Prices (mean) during First Lockdown in Dublin"
     )
+  )+
+  geom_vline(xintercept =(base_year %--% date("2020/03/20")) %/% days(1), col="#d90429",lab="abcd")+
+  geom_label(
+    label="20th March", 
+    x=(base_year %--% date("2020/03/20")) %/% days(1),
+    y=4.8,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#ef233c"
   )
+
+?geom_vline
 
 df %>%
   group_by(region) %>%

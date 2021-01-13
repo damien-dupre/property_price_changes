@@ -45,15 +45,23 @@ df<-daftdb %>%
 
 ```
 
-Mean House Price 
+The following chart depicts the average weekly price for houses listed for sale in Dublin. The vetical lines depicts various stages of lockdown due to COVID-19 which are as follows.
+12th March: Earlier measures had been taken by the government
+27th March: Ireland was placed on full lockdown with all non essential journeys banned for two weeks
+10th April: Lockdown extended for 3 weeks
+1st May: Government's road map is published
+5th May: Lockdown extended for 3 weeks
+
 
 ```{r}
 
+
 df %>%
+  filter(sale_type=="Sale") %>%
   group_by(week=floor_date(date, "week")) %>%
   summarise(amount=mean(price)) %>%
   ggplot(aes(x=week,y=amount/100000, fill=week)) +
-  geom_line(stat = "identity") +
+  geom_line(stat = "identity", col="#00AFBB",size=2) +
   theme_classic()+
   labs(
     y = "Mean Price (in Hundred Thousands Euros)",
@@ -61,7 +69,48 @@ df %>%
     title = paste(
       "Trend in House Prices (mean) during First Lockdown in Dublin"
     )
+  )+
+  geom_vline(xintercept =(base_year %--% date("2020/03/12")) %/% days(1), col="#d90429")+
+  geom_label(
+    label="12th March", 
+    x=(base_year %--% date("2020/03/12")) %/% days(1),
+    y=4.8,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#ef233c"
+  )+
+  geom_vline(xintercept =(base_year %--% date("2020/03/27")) %/% days(1), col="#d90429")+
+  geom_label(
+    label="27th March", 
+    x=(base_year %--% date("2020/03/27")) %/% days(1),
+    y=4.83,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#ef233c"
+  )+
+  geom_vline(xintercept =(base_year %--% date("2020/04/10")) %/% days(1), col="#d90429")+
+  geom_label(
+    label="10th April", 
+    x=(base_year %--% date("2020/04/10")) %/% days(1),
+    y=4.75,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#ef233c"
+  )+
+    geom_vline(xintercept =(base_year %--% date("2020/05/1")) %/% days(1), col="#8d99ae")+
+  geom_label(
+    label="1st May", 
+    x=(base_year %--% date("2020/05/1")) %/% days(1),
+    y=4.8,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#8d99ae"
   )
+ 
 ```
 ```{r}
 df %>%
@@ -83,20 +132,67 @@ df %>%
  Dublin 1
  
 ```{r}
-df %>%
-  filter(region=="Dublin 1") %>%
+regionwise<- function(reg)
+{
+  df %>%
+  filter(sale_type=="Sale") %>%
+  filter(region==reg) %>%
   group_by(week=floor_date(date, "week")) %>%
   summarise(amount=mean(price)) %>%
   ggplot(aes(x=week,y=amount/100000, fill=week)) +
-  geom_line(stat = "identity") +
+  geom_line(stat = "identity", col="#00AFBB",size=2) +
   theme_classic()+
   labs(
     y = "Mean Price (in Hundred Thousands Euros)",
     x = "Weeks",
     title = paste(
-      "Trend in House Prices (mean) during First Lockdown in Dublin 1"
+      "Trend in House Prices (mean) during First Lockdown in Dublin"
     )
+  )+
+  geom_vline(xintercept =(base_year %--% date("2020/03/12")) %/% days(1), col="#d90429")+
+  geom_label(
+    label="12th March", 
+    x=(base_year %--% date("2020/03/12")) %/% days(1),
+    y=4.8,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#ef233c"
+  )+
+  geom_vline(xintercept =(base_year %--% date("2020/03/27")) %/% days(1), col="#d90429")+
+  geom_label(
+    label="27th March", 
+    x=(base_year %--% date("2020/03/27")) %/% days(1),
+    y=4.83,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#ef233c"
+  )+
+  geom_vline(xintercept =(base_year %--% date("2020/04/10")) %/% days(1), col="#d90429")+
+  geom_label(
+    label="10th April", 
+    x=(base_year %--% date("2020/04/10")) %/% days(1),
+    y=4.75,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#ef233c"
+  )+
+    geom_vline(xintercept =(base_year %--% date("2020/05/1")) %/% days(1), col="#8d99ae")+
+  geom_label(
+    label="1st May", 
+    x=(base_year %--% date("2020/05/1")) %/% days(1),
+    y=4.8,
+    label.padding = unit(0.55, "lines"), # Rectangle size around label
+    label.size = 0.35,
+    color = "#edf2f4",
+    fill="#8d99ae"
   )
+}
+
+regionwise("Dublin 1")
+  
 ```
  Dublin 11
 ```{r}
