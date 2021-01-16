@@ -1,0 +1,141 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+lets import all the libraries first
+
+```{r setup, include = FALSE}
+# options ----------------------------------------------------------------------
+base::set.seed(42)
+base::options(
+  scipen = 999,
+  knitr.kable.NA = " - "
+  )
+
+knitr::opts_chunk$set(
+  cache.extra = knitr::rand_seed, 
+  cache = FALSE,
+  message = FALSE, 
+  warning = FALSE, 
+  error = FALSE, 
+  echo = TRUE,
+  fig.retina = 3
+  )
+
+# libraries --------------------------------------------------------------------
+# Install pacman ("package manager") if needed
+if (!require("pacman")) install.packages("pacman")
+
+# Load contributed packages with pacman
+pacman::p_load(party, rio, tidyverse, lubridate, plotly)
+# Load contributed packages with pacman
+
+# comments  --------------------------------------------------------------------
+# be careful with the style, see https://style.tidyverse.org/index.html
+```
+
+import the Data. This is the data in its raw form which requires some procession before it can be analysed
+
+```{r}
+daftdb <- rio::import("daftdb.rds") %>% as_tibble()
+
+# I didn't know the package {rio} to load data but it's a good practice to have structure in your project with the data being in its own data folder (see for example https://chrisvoncsefalvay.com/2018/08/09/structuring-r-projects/)
+```
+
+
+Process and clean data.
+
+1. Clean price data
+2. Remove euro sign and convert price in numeric format
+3. Add a new factor region 
+
+```{r}
+# df <- daftdb %>%
+#   mutate(price = iconv(enc2utf8(daftdb$price), sub = "byte")) %>%
+#   mutate(address = iconv(enc2utf8(daftdb$address), sub = "byte")) %>%
+#   mutate(sale_type = case_when(str_detect(price, "^Reserve") == TRUE ~ "Auction", TRUE ~ "Sale")) %>%
+#   mutate(price = str_remove_all(price, "[:alpha:]|[:]|[,]|[\u20AC]|[\u0020]")) %>%
+#   mutate(price = as.numeric(price)) %>%
+#   mutate_at(vars(price),  ~ if_else(is.na(.), 0, .)) %>%
+#   mutate(region = str_extract(address, "Dublin [0-9]+")) %>%
+#   mutate(region = as.factor(region), structure = as.factor(structure)) %>%
+#   mutate(date = as.Date(date, format = "%m/%d/%y"))
+
+df <- daftdb %>%
+  mutate(
+    price = readr::parse_number(price, locale = readr::locale(decimal_mark = ".", grouping_mark = ",")),
+    region = str_extract(address, "Dublin [0-9]+"),
+    date = as.Date(date, format = "%m/%d/%y")
+    )
+
+glimpse(df)
+```
+
+Mean House Price 
+
+```{r}
+df %>%
+  group_by(week = floor_date(date, "week")) %>%
+  summarise(amount = mean(price, na.rm = TRUE)) %>%
+  ggplot(aes(x = week, y = amount / 100000, fill = week)) +
+  geom_line(stat = "identity") +
+  theme_classic() +
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste("Trend in House Prices (mean) during First Lockdown in Dublin")
+  )
+```
+
+```{r}
+df %>%
+  group_by(region) %>%
+  summarise(amount = mean(price)) %>%
+  arrange(desc(amount)) %>%
+  ggplot(aes(x = region, y = amount / 100000)) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Regions",
+    title = paste("Mean House Prices regionwise during First Lockdown in Dublin")
+  )
+```
+ 
+```{r}
+df %>%
+  group_by(region, week = floor_date(date, "week")) %>%
+  summarise(amount = mean(price, na.rm = TRUE)) %>%
+  filter(!is.na(region)) %>% 
+  ggplot(aes(x = week, y = amount / 100000, fill = week)) +
+  geom_line(stat = "identity") +
+  facet_wrap(~ region) +
+  theme_classic() +
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = paste("Trend in House Prices (mean) during First Lockdown in Dublin Regions")
+  )
+```
+ 
+This Chart depicts price data in County Dublin excluding above regions in Dublin
+
+```{r}
+plot_df <- df %>%
+  group_by(region, week = floor_date(date, "week")) %>%
+  summarise(amount = mean(price, na.rm = TRUE)) %>%
+  filter(!is.na(region)) %>% 
+  ggplot(aes(x = week, y = amount / 100000, color = region)) +
+  geom_line() +
+  #geom_smooth(aes(x = week, y = amount / 100000), method = "gam", inherit.aes = FALSE, color = "black") +
+  theme_classic() +
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Weeks",
+    title = "Trend in House Prices (mean) during First Lockdown in Dublin Regions"
+  )
+
+ggplotly(plot_df)
+```
+
