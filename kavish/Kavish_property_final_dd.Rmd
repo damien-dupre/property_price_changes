@@ -1,0 +1,128 @@
+---
+title: "Kavish property final DD"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE
+  )
+
+options(scipen = 999)
+```
+
+# Loading packages and import data
+
+In practice loading the packages and the data are in the chuck setup (hidden from output) but here, I'm using as specific chunk.
+
+To load libraries {pacman} is a great tool but some like Hadley Wickam would say that we should avoid it as it will install packages that you don't necessary want.
+
+```{r eval=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(pacman, tidyverse, rio, psych, party)
+```
+
+So I'd suggest simply to use for example:
+
+```{r}
+library(tidyverse)
+library(here)
+library(psych)
+```
+
+I see you tried to use Mohd's code to read data but you forgot the function to read the data file. 
+
+```{r eval=FALSE}
+(dfdb <- daftdb) %>%
+  as_tibble()
+```
+
+Instead of using {rio} as Mohd, I would use a function from the {readr} package
+
+```{r}
+daftdb <- here("data/daftdb.rds") %>% read_rds
+
+dfdb <- daftdb # just to match with you code but as.tibble is not necessary
+```
+
+# Convert price as numeric
+
+I see you did some tests:
+
+```{r}
+# gsub () is used to substitute specific text from a string with other text, 
+# and as.numeric () can coerce a variable to numeric.
+# gsub(pattern, replacement, x, ignore.case = FALSE)
+
+#testdf <- dfdb %>%
+#  filter(index == 1 | index == 284 | index == 259) %>%
+#  print()
+
+#gsub("Terraced","Roof",testdf$structure, ignore.case = T)
+
+class(dfdb$price)
+
+```
+
+Indeed price is a character variable and not numeric, that's the biggest challenge.
+
+```{r}
+#replaced the string and trimmed--------------------------------------------------------
+dfdb$price <- str_replace_all(dfdb$price, "[a-z,A-Z,:]","") #"[a-z,A-Z]",""
+
+dfdb$price <- str_trim(dfdb$price) #removed whitespaces
+
+#euro sign removed-------------------------------------------------------------------
+dfdb$price <- str_sub(dfdb$price,2)
+
+#replaced empty spaces with 0--------------------------------------------------------
+dfdb$price <- str_replace_all(dfdb$price, "^$", "0")
+
+#testdf$price2 <- gsub("^$", "0", testdf$price2) - This would work too
+
+#commas removed- not needed ---------------------------------------------------------
+#testdf$price2 <- str_replace(testdf$price2, ",","")
+
+#conversion time-------------------------------------------------------------------
+dfdb$price <- as.double(dfdb$price)
+class(dfdb$price) #successful
+
+summary(dfdb$price)
+```
+
+The use of regex to extract the numeric price is excellent! 
+
+Be careful with the style of your code, the '=' for object assignment is not advised and try to use a space after a comma. For more details about the coding style you could have a look at https://style.tidyverse.org/index.html
+
+Your approach is to remove all the letters and whitespaces, but you could also have kept only the numeric values with:
+
+```{r}
+stringr::str_extract(daftdb$price[1], "[0-9]+(?:,[0-9]+)?") 
+```
+
+But there is a perfect function in the {readr} package called `parse_number()`
+
+```{r}
+readr::parse_number(daftdb$price[1])
+```
+
+# Visualisation
+
+I see you used base R for your boxplot. 
+
+```{r}
+#Boxplot of price-------------------------------------------------------------------
+boxplot(dfdb$price, notch = T, horizontal = T)
+```
+
+This is perfectly fine but a ggplot approach could be nice as well:
+
+```{r}
+ggplot(dfdb, aes(price)) +
+  geom_boxplot() +
+  theme_bw()
+```
+
