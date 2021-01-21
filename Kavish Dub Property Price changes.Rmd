@@ -4,21 +4,20 @@ This code will do the following tasks -
   3. Remove white spaces from 'structure' column.
   4. Create relevant plots.
 
-if (!require("pacman")) install.packages("pacman")
-
-pacman::p_load(pacman, tidyverse, rio, psych, party)
-
+library(tidyverse)
 library(lubridate)
+library(dplyr)
 
 #New data frame created ----------------------------------------------------------------
 (dfdb <- daftdb) %>%
   as_tibble()
 
 #remove houses on auction or price not available ---------------------------------------
+#removing them and NOT putting 0's as this would skew the data -------------------------
 dfdb <- dfdb %>%
   filter(str_detect(price, "Reserve") == "FALSE") %>%
   filter(str_detect(price, "AMV") == "FALSE") %>%
-  filter(str_detect(price, "Price") == "FALSE") %>%
+  filter(str_detect(price, "Price") == "FALSE") %>% 
   print()
 
 #trimmed the house structure string --------------------------------------------------

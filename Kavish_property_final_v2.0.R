@@ -4,11 +4,10 @@
 # 3. Remove white spaces from 'structure' column.
 # 4. Create relevant plots.
 
-if (!require("pacman")) install.packages("pacman")
 
-pacman::p_load(pacman, tidyverse, rio, psych, party)
-
+library(tidyverse)
 library(lubridate)
+library(dplyr)
 
 #New data frame created ----------------------------------------------------------------
 (dfdb <- daftdb) %>%
