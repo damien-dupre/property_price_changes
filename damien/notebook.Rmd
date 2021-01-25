@@ -41,7 +41,7 @@ library(knitr)
 library(kableExtra)
 
 # data -------------------------------------------------------------------------
-daftdb <- here("data/daftdb.rds") %>% read_rds
+daftdb <- here("data/daftdb.rds") %>% read_rds()
 ```
 
 The data consist in `r nrow(daftdb)` observations of `r n_distinct(daftdb$address)` unique properties located in North Dublin Areas, Ireland, listed on the website [daft.ie](https://www.daft.ie/) between `r min(daftdb$date)` which corresponds to the beginning of the first Irish lockdown and `r max(daftdb$date)`.
@@ -57,20 +57,20 @@ glimpse(daftdb)
 ```
 
 There are many things that we can see from here:
+
 1. We want an analysis for each Dublin Area but there is no column so we will have to extract the last bit of the address (*e.g.,* Dublin 1, Dublin 2, ...)
 2. The price is a character string variable, we need to extract the numbers to convert it as numeric values
 3. The date is already in date type! no need to convert it actually
 
 ## 1. Extracting Area
 
-Many thanks to some of you to provide the solution using regex. Regex is one of the most difficult thing in R (and in several other languages) but it's also one of the most usefull. To extract the area, it is possible to seach for "Dublin" in the string and to get all the numbers following:
+Many thanks to some of you to provide the solution using regex. Regex is one of the most difficult thing in R (and in several other languages) but it's also one of the most useful. To extract the area, it is possible to search for "Dublin" in the string and to get all the numbers following:
 
 ```{r}
 daftdb <- daftdb %>% 
   mutate(
     area = str_extract(address, "Dublin [0-9]+")
-  ) %>%
-  ungroup()
+  )
 
 daftdb %>% 
   select(address, area) %>% 
@@ -91,8 +91,7 @@ Even if it would be more complicated to use a regex here, it would still do. How
 daftdb <- daftdb %>%
   mutate(
     price_parsed = parse_number(price, locale = locale(grouping_mark = ","))
-  ) %>%
-  ungroup()
+  )
 
 daftdb %>%
   select(price, price_parsed) %>%
@@ -164,7 +163,7 @@ daftdb %>%
   geom_line(color = "blue", alpha = 0.1) +
   scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
   facet_wrap(~ area) +
-  theme_bw() +
+  theme_classic() +
   labs(
     x = "Observation Date",
     y = "Property Price",
