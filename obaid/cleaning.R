@@ -28,6 +28,22 @@ df<-daftdb %>%
 
 
 df %>%
+  group_by(region) %>%
+  summarise(amount=mean(price)) %>%
+  ggplot(aes(x=region,y=amount/100000)) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  labs(
+    y = "Mean Price (in Hundred Thousands Euros)",
+    x = "Regions",
+    title = paste(
+      "Mean House Prices regionwise during First Lockdown in Dublin"
+    )
+  )
+  
+
+
+df %>%
   group_by(month(date)) %>%
   select(price) %>%
   summarise_each(funs(mean)) %>%

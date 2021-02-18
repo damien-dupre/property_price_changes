@@ -1,0 +1,342 @@
+---
+title: "Regression Test"
+author: "Obaid"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+
+
+```yaml
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+```
+
+---
+
+```{r setup, include=FALSE}
+# options ----------------------------------------------------------------------
+base::set.seed(42)
+base::options(
+  scipen = 999,
+  knitr.kable.NA = " - "
+  )
+
+knitr::opts_chunk$set(
+  cache.extra = knitr::rand_seed, 
+  cache = FALSE,
+  message = FALSE, 
+  warning = FALSE, 
+  error = FALSE, 
+  echo = TRUE,
+  fig.retina = 3
+  )
+
+# usually libraries and data go in there but of the demonstration I will add them a specific chunk
+```
+
+# Configuration
+
+List of the packages used and access to the data:
+
+```{r}
+# the package {prettydoc} is used in the YAML (not loaded in the code chunks)
+# libraries --------------------------------------------------------------------
+library(tidyverse)
+library(here)
+library(scales)
+library(knitr)
+library(kableExtra)
+library(modelr)
+
+# data -------------------------------------------------------------------------
+daftdb <- here("data/daftdb.rds") %>% read_rds()
+```
+ I have taken your work as a starting point for the inferential analysis. 
+
+The data consist in `r nrow(daftdb)` observations of `r n_distinct(daftdb$address)` unique properties located in North Dublin Areas, Ireland, listed on the website [daft.ie](https://www.daft.ie/) between `r min(daftdb$date)` which corresponds to the beginning of the first Irish lockdown and `r max(daftdb$date)`.
+
+The objective of this project is to evaluate the changes in prices during this period.
+
+# Cleaning and Parsing
+
+First let's have a look at the data. There are many functions to have a nice first insight, the most basic one is `str()` from {base}, I always use it but people in the tidyverse like using `glimpse()` from {tibble}. Why not using this last one for once
+
+```{r}
+glimpse(daftdb)
+```
+
+There are many things that we can see from here:
+
+1. We want an analysis for each Dublin Area but there is no column so we will have to extract the last bit of the address (*e.g.,* Dublin 1, Dublin 2, ...)
+2. The price is a character string variable, we need to extract the numbers to convert it as numeric values
+3. The date is already in date type! no need to convert it actually
+
+## 1. Extracting Area
+
+Many thanks to some of you to provide the solution using regex. Regex is one of the most difficult thing in R (and in several other languages) but it's also one of the most useful. To extract the area, it is possible to search for "Dublin" in the string and to get all the numbers following:
+
+
+
+```{r}
+daftdb <- daftdb %>% 
+  mutate(
+    area = str_extract(address, "Dublin [0-9]+")
+  )
+
+daftdb %>% 
+  select(address, area) %>% 
+  slice_sample(n = 5)
+```
+
+I was thinking of extracting only the last character(s) of the address, it could work be it's not as elegant.
+
+We could also imagine a `separate()` from {tidyr} using "Dublin" as separator but it will be less efficient.
+
+## 2. Parsing Price
+
+Here is another classic but deadly problem, the values of price are characters with the symbol euro, some values have characters before the actual price "AMC" and some have "Price On Application" instead of a value.
+
+Even if it would be more complicated to use a regex here, it would still do. However, after a couple of minutes googling, I found the function `parse_number()` from {readr} that is very promising.
+
+*Modifications*
+
+Parsed area to exact the area code just to investigate its effect
+
+
+
+```{r}
+daftdb <- daftdb %>%
+  mutate(
+    price_parsed = parse_number(price, locale = locale(grouping_mark = ",")),
+    area_parsed = parse_number(price, locale = locale(grouping_mark = ",")),
+    
+  )
+
+daftdb %>%
+  select(price, price_parsed) %>%
+  slice_sample(n = 5)
+```
+
+It triggers a lot of warnings due to "Price On Application" which is replaced by NA values but NA values is what we want.
+
+> Note: The temptation to replace NA values by 0 is real but this is a huge mistake to not do. Imagine a series of values 1000, NA, and 2000; its average is 1500. But if you replace NA with 0 the average will be 1000. The higher the numbers, the bigger the mistake.
+
+## 3. Difference Calculation
+
+Now the most important is to check is the price of property changed. Once again there are multiple solutions but I will present the first one that came to me:
+
+
+*Modifications*
+
+added other values need to investigated such as bedroom, bathroom, price_parse, area and area_parsed
+
+```{r}
+daftdiff <- daftdb %>% 
+  group_by(address, area) %>% 
+  summarise(price_diff = max(price_parsed) - min(price_parsed),bathroom,bedroom,price_parsed,area,area_parsed) %>%
+  ungroup()
+
+daftdiff %>% 
+  slice_sample(n = 5)
+```
+
+# Descriptive Analysis
+
+Each area appears to be very different in term of distribution of prices. The table here below describes each area:
+
+```{r}
+daftdb %>% 
+  filter(!is.na(area)) %>% 
+  group_by(area) %>%
+  summarise(
+    n_property = n_distinct(address),
+    price_mean = mean(price_parsed, na.rm = TRUE) %>% dollar(suffix = "", prefix = "€"),
+    price_sd = sd(price_parsed, na.rm = TRUE) %>% dollar(suffix = "", prefix = "€")
+  ) %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", font_size = 10)
+```
+
+Dublin 1 has a very high average property price but only has 3 properties. The average price is far lower in the other areas with Dublin 17 having the lowest.
+
+The average difference between the maximum and minimum price for each property is `r dollar(mean(daftdiff$price_diff, na.rm = TRUE), suffix = "", prefix = "€")`. However, over the `r n_distinct(daftdb$address)` unique properties, only `r nrow(filter(daftdiff, price_diff != 0))` have seen a change in their price (i.e., only `r percent(nrow(filter(daftdiff, price_diff != 0))/n_distinct(daftdb$address))`).
+
+```{r fig.height=3, fig.width=10}
+daftdiff %>% 
+  filter(!is.na(area)) %>% 
+  group_by(area) %>%
+  summarise(price_diff_mean = mean(price_diff, na.rm = TRUE)) %>%
+  ggplot(aes(price_diff_mean, reorder(area, desc(price_diff_mean)), fill = price_diff_mean)) +
+  geom_col() +
+  scale_x_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(
+    x = "Mean Change in Price",
+    y = "",
+    title = "Differences between areas in property price changes"
+  )
+```
+
+However the important change in Dublin 1 is only due to very few observation. The analysis of property price change by property according the time reveals very few changes in fact.
+
+```{r fig.height=6, fig.width=10}
+daftdb %>% 
+  filter(!is.na(area)) %>% 
+  ggplot(aes(date, price_parsed, group = address)) +
+  geom_line(color = "blue", alpha = 0.1) +
+  scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+  facet_wrap(~ area) +
+  theme_classic() +
+  labs(
+    x = "Observation Date",
+    y = "Property Price",
+    title = "Evolution of property prices according the time for each area"
+  )
+```
+
+Using a non-linear regression it is possible to clearly identify the absence of changes for each area.
+
+```{r fig.height=3, fig.width=10}
+daftdb %>% 
+  filter(!is.na(area)) %>% 
+  ggplot(aes(date, price_parsed, color = area)) +
+  geom_smooth() +
+  scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+  theme_bw() +
+  labs(
+    x = "Observation Date",
+    y = "Property Price",
+    title = "Summary of the evoluotion in property prices for each area"
+  )
+```
+
+Despite no apparent changes in the prices, it is possible to go further with some inferential analyses to see the relationship between houses characteristics and price.
+
+
+
+#Bivaraite Analysis
+
+We will used the modified data to investigate further using a new dataframe `df2` which extracts data from `daftdiff`
+
+```{r}
+
+df2<- daftdiff %>%
+  select(price_diff,price_parsed, bedroom,bathroom,area) %>%
+  mutate_at(vars(area),  ~ if_else(is.na(.), "Co. Dublin", .)) %>%
+  mutate( bedroom=as.factor(bedroom),bathroom=as.factor(bathroom))
+
+
+df2 %>% 
+  slice_sample(n = 5)
+
+
+```
+
+
+
+
+
+```{r fig.height=6, fig.width=10}
+
+ggplot(df2, aes(y=price_diff, x=price_parsed)) + 
+  geom_point()+
+   geom_smooth() +
+  scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+  scale_x_continuous(labels = dollar_format(suffix = "", prefix = "€"))+
+  theme_bw() +
+  labs(
+    x = "Property Prices",
+    y = "Property Price Diffrence",
+    title = "Relation between Property Price diffrence and Property prices"
+  )
+  
+
+
+```
+If we just observe the properties which observed the price changes.
+
+
+```{r}
+
+df2%>%
+  filter(price_diff!=0)%>%
+  ggplot(aes(y=price_diff, x=price_parsed)) + 
+    geom_point()+
+     geom_smooth(method=lm) +
+    scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+    scale_x_continuous(labels = dollar_format(suffix = "", prefix = "€"))+
+    theme_bw() +
+    labs(
+      x = "Property Prices",
+      y = "Property Price Diffrence",
+      title = "Relation between Property Price diffrence and Property prices"
+    )
+  
+```
+```{r}
+df2%>%
+  filter(price_diff!=0)%>%
+  ggplot() +
+    geom_point(aes(bedroom,price_diff))+
+  geom_smooth(aes(y=price_diff, x=bedroom),method=lm) +
+  scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+    theme_bw() +
+    labs(
+      x = "Number of Bedrooms",
+      y = "Property Price Diffrence",
+      title = "Relation between Property Price diffrence and Property prices"
+    )
+```
+```{r}
+df2%>%
+  filter(price_diff!=0)%>%
+  ggplot() +
+    geom_point(aes(bathroom,price_diff))+
+  scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+  
+    theme_bw() +
+    labs(
+      x = "Number of Bathrooms",
+      y = "Property Price Diffrence",
+      title = "Relation between Property Price diffrence and Property prices"
+    )
+```
+```{r}
+df2%>%
+  filter(price_diff!=0)%>%
+  ggplot(aes(y=price_diff, x=area)) + 
+    geom_point()+
+     geom_abline() +
+    scale_y_continuous(labels = dollar_format(suffix = "", prefix = "€")) +
+   
+    theme_bw() +
+    labs(
+      x = "Property Prices",
+      y = "Property Price Diffrence",
+      title = "Relation between Property Price diffrence and Property prices"
+    )
+
+```
+
+
+
+# Hypothesis
+
+If price, number of bedroom, number of bathroom, area has an effect on the price changes.
+
+```{r}
+
+mod_fit<-lm(price_diff~.,data=df2)
+
+
+summary(mod_fit)
+```
+
+
