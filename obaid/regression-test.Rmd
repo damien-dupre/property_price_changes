@@ -343,13 +343,18 @@ mod_fit1<-lm(data=df2, price_diff~.)
 summary(mod_fit1)
 ```
 ```{r}
-predict_mod<- data.frame(predict_val=predict(mod_fit1), price_diff=df2$price_diff)
+predict_mod<- data.frame(predict_val=predict(mod_fit1), price_diff=df2$price_diff,resi_val=resid(mod_fit1))
 
 ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
   geom_point()+
   geom_smooth(method = lm)
   
 
+```
+```{r}
+
+ggplot(predict_mod, aes(price_diff,resi_val)) + 
+  geom_point()
 ```
 
 # Hypothesis 2
@@ -366,12 +371,19 @@ mod_fit2<-lm(data=df3, price_diff~.)
 summary(mod_fit2)
 ```
 ```{r}
-predict_mod<- data.frame(predict_val=predict(mod_fit2), price_diff=df3$price_diff)
+predict_mod<- data.frame(predict_val=predict(mod_fit2), price_diff=df3$price_diff,resi_val=resid(mod_fit2))
 
 ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
   geom_point()+
   geom_smooth(method = lm)
+
   
+```
+```{r}
+
+
+ggplot(predict_mod, aes(price_diff,resi_val)) + 
+  geom_point()
 ```
 
 
@@ -383,12 +395,17 @@ mod_fit3<-lm(data=df2, price_diff~bathroom*bedroom*area*price_parsed)
 summary(mod_fit3)
 ```
 ```{r}
-predict_mod<- data.frame(predict_val=predict(mod_fit3), price_diff=df2$price_diff)
+predict_mod<- data.frame(predict_val=predict(mod_fit3), price_diff=df2$price_diff,resi_val=resid(mod_fit3))
 
 ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
   geom_point()+
   geom_smooth(method = lm)
   
+```
+```{r}
+
+ggplot(predict_mod, aes(price_diff,resi_val)) + 
+  geom_point()
 ```
 
 
@@ -399,12 +416,16 @@ mod_fit4<-lm(data=df3, price_diff~bathroom*bedroom*area_parsed*price_parsed)
 summary(mod_fit4)
 ```
 ```{r}
-predict_mod<- data.frame(predict_val=predict(mod_fit4), price_diff=df2$price_diff)
+predict_mod<- data.frame(predict_val=predict(mod_fit4), price_diff=df2$price_diff,resi_val=resid(mod_fit4))
 
 ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
   geom_point()+
   geom_smooth(method = lm)
   
+```
+```{r}
+ggplot(predict_mod, aes(price_diff,resi_val)) + 
+  geom_point()
 ```
 
 
