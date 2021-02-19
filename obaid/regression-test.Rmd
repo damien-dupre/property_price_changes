@@ -114,7 +114,7 @@ Parsed area to exact the area code just to investigate its effect
 daftdb <- daftdb %>%
   mutate(
     price_parsed = parse_number(price, locale = locale(grouping_mark = ",")),
-    area_parsed = parse_number(price, locale = locale(grouping_mark = ",")),
+    area_parsed = parse_number(area, locale = locale(grouping_mark = ",")),
     
   )
 
@@ -327,16 +327,84 @@ df2%>%
 
 
 
-# Hypothesis
+# Hypothesis 1
 
 If price, number of bedroom, number of bathroom, area has an effect on the price changes.
 
 ```{r}
+df2<-
+  df2%>%
+  filter(price_diff!=0)
+  
 
-mod_fit<-lm(price_diff~.,data=df2)
+
+mod_fit1<-lm(data=df2, price_diff~.)
+
+summary(mod_fit1)
+```
+```{r}
+predict_mod<- data.frame(predict_val=predict(mod_fit1), price_diff=df2$price_diff)
+
+ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
+  geom_point()+
+  geom_smooth(method = lm)
+  
+
+```
+
+# Hypothesis 2
+
+```{r}
+df3<- daftdiff %>%
+  select(price_diff,price_parsed, bedroom,bathroom,area_parsed) %>%
+  mutate_at(vars(area_parsed),  ~ if_else(is.na(.), 0 , .)) %>%
+   filter(price_diff!=0)
 
 
-summary(mod_fit)
+mod_fit2<-lm(data=df3, price_diff~.)
+
+summary(mod_fit2)
+```
+```{r}
+predict_mod<- data.frame(predict_val=predict(mod_fit2), price_diff=df3$price_diff)
+
+ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
+  geom_point()+
+  geom_smooth(method = lm)
+  
+```
+
+
+# Hypothesis 3
+
+```{r}
+mod_fit3<-lm(data=df2, price_diff~bathroom*bedroom*area*price_parsed)
+
+summary(mod_fit3)
+```
+```{r}
+predict_mod<- data.frame(predict_val=predict(mod_fit3), price_diff=df2$price_diff)
+
+ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
+  geom_point()+
+  geom_smooth(method = lm)
+  
+```
+
+
+# Hypothesis 4
+```{r}
+mod_fit4<-lm(data=df3, price_diff~bathroom*bedroom*area_parsed*price_parsed)
+
+summary(mod_fit4)
+```
+```{r}
+predict_mod<- data.frame(predict_val=predict(mod_fit4), price_diff=df2$price_diff)
+
+ggplot(data=predict_mod, aes(x=price_diff, y=predict_val))+
+  geom_point()+
+  geom_smooth(method = lm)
+  
 ```
 
 
